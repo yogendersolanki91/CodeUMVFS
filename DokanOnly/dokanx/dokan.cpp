@@ -221,6 +221,7 @@ DokanMain(PDOKAN_OPTIONS DokanOptions, PDOKAN_OPERATIONS DokanOperations)
             instance, // param
             0, // create flag
             NULL);
+		
     }
 
     for (i = 0; i < DokanOptions->ThreadCount; ++i) {

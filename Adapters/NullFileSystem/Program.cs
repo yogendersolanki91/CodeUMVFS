@@ -11,7 +11,7 @@ namespace NullFileSystem
     {
         static void Main(string[] args)
         {
-            DokanNative native = new DokanNative(new NullFileSystem(),15,"P:","NULL","NULL");
+            DokanNative native = new DokanNative(new NullFileSystem(),215,"P:","NULL","NULL");
             native.StartDokan();
          
         }
