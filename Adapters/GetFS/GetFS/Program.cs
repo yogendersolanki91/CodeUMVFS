@@ -10,6 +10,7 @@ using DokanXBase;
 using DokanXNative;
 using Utility;
 using NodeRsolver;
+using System.Text;
 
 
 namespace Discovery.ListAPIs
@@ -67,7 +68,7 @@ namespace Discovery.ListAPIs
         public class ServiceProvider
         {
 
-            public static async Task<Google.Apis.Customsearch.v1.Data.Search> SearchGoogle(string query)
+            public static async Task<Google.Apis.Customsearch.v1.Data.Search> SearchGoogle(string query,int start)
             {
                 // Create the service.
 
@@ -77,6 +78,7 @@ namespace Discovery.ListAPIs
                 });
 
                 var lisreq = service.Cse.List(query);
+                lisreq.Start = start;
                 lisreq.Cx = "009117456931165509268:km0cf-wdaws";
                 // Run the request.
                 Console.WriteLine("Executing a list request...");
@@ -140,17 +142,33 @@ namespace Discovery.ListAPIs
 
             public uint Def_ReadFile(string filename, IntPtr buffer, uint bufferSize, ref uint readBytes, long offset, IntPtr info)
             {
+                StringBuilder data = new StringBuilder();
                 VNode Node = new VNode(filename);
                 string query="";
+                
                 Console.WriteLine("reading {0} {1}",Node.isValid,Node.fileName);
                 if (Node.isValid && Node.param.TryGetValue("q",out query))
                 {
-                      Task<Google.Apis.Customsearch.v1.Data.Search> ret = ServiceProvider.SearchGoogle("YOgender");
+                    Task<Google.Apis.Customsearch.v1.Data.Search> ret;
+                   if(Node.param.ContainsKey("n")){
+                       int n=0;
+                       string temp="";
+                       Node.param.TryGetValue("n",out temp);
+                       int.TryParse(temp,out n);
+                        ret= ServiceProvider.SearchGoogle(query,n);
+                   }
+                   else{
+                       ret=ServiceProvider.SearchGoogle(query,0);
+                   }
                      ret.Wait();
                      foreach (Google.Apis.Customsearch.v1.Data.Result s in ret.Result.Items)
                      {
-                         Console.WriteLine("{0} {1} {2}",s.HtmlTitle,s.Snippet); 
-                     }      
+                         data.AppendLine(s.Title);
+                         data.AppendLine("----------------------------------------------------------------");
+                         data.AppendLine(s.Snippet);
+                         data.AppendLine(s.Link);
+                     }
+                     Console.WriteLine(data.ToString());
                 }
                 else
                 {
