@@ -323,11 +323,6 @@
   <ItemGroup>
     <FilesToPackage Include="@(Inf->'%(CopyOutput)')" Condition="'@(Inf)'!=''" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DokanXSys\DokanXSys.vcxproj">
-      <Project>{19f80a40-03ef-4d7f-bfa3-702fa479c3c3}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

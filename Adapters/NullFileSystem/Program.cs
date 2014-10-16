@@ -11,7 +11,7 @@ namespace NullFileSystem
     {
         static void Main(string[] args)
         {
-            DokanNative native = new DokanNative(new NullFileSystem(),215,"P:","NULL","NULL");
+            DokanNative native = new DokanNative(new NullFileSystem(),14,"P:","NULL","NULL");
             native.StartDokan();
          
         }
@@ -75,6 +75,10 @@ namespace NullFileSystem
 
         public uint Def_GetVolumeInfo(IntPtr VolumeNameBuffer, uint VolumeNameSize, ref uint SerialNumber, ref uint MaxComponenetLegnth, ref uint FileSystemFeatures, IntPtr FileSystemNameBuffer, uint FileSystemNameSize)
         {
+            HelperFunction.SetVolumeInfo(VolumeNameBuffer, "NULL", (int)VolumeNameSize, FileSystemNameBuffer, "NULL", (int)FileSystemNameSize);
+            FileSystemFeatures = (uint)(FILE_FS_ATTRIBUTE_INFORMATION.FILE_UNICODE_ON_DISK | FILE_FS_ATTRIBUTE_INFORMATION.FILE_UNICODE_ON_DISK);
+            MaxComponenetLegnth = 409600;
+            SerialNumber = (uint)GetHashCode();
            return 0;
         }
 
@@ -132,7 +136,7 @@ namespace NullFileSystem
 
         public uint Def_WriteFile(string filename, byte[] buffer, ref uint writtenBytes, long offset, IntPtr info)
         {
-            //writtenBytes=buffer.Length
+            writtenBytes = (uint)buffer.Length;
            return 0;
         }
     }
