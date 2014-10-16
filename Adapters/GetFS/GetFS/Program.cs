@@ -11,6 +11,9 @@ using DokanXNative;
 using Utility;
 using NodeRsolver;
 using System.Text;
+using System.Collections.Generic;
+using Kaliko.ImageLibrary;
+using Kaliko.ImageLibrary.Filters;
 
 
 namespace Discovery.ListAPIs
@@ -83,7 +86,7 @@ namespace Discovery.ListAPIs
                 // Run the request.
                 Console.WriteLine("Executing a list request...");
                 var result = await lisreq.ExecuteAsync();
-                lisreq.Start = 20;
+                lisreq.Start = start;
 
                 return result;
 
@@ -107,7 +110,9 @@ namespace Discovery.ListAPIs
         {
             string[] services={"WebSearch","ImagePass"};
             string[] WebSearch = {"google.srv",};
-            string[] imageFiles = { };
+            List<string> imageFiles = new List<string>();
+            Dictionary<string, byte[]> cache = new Dictionary<string, byte[]>();
+            string filepath = @"C:\Users\Dr. Devil\Pictures";
             public uint Def_CreateFile(string filename, System.IO.FileAccess access, System.IO.FileShare share, System.IO.FileMode mode, System.IO.FileOptions options, IntPtr info)
             {
                 if (new VNode(filename).isValid)
@@ -115,7 +120,13 @@ namespace Discovery.ListAPIs
                 else
                     return 0xC000000F;
             }
-
+            public RestFS()
+            {
+                foreach(string file in System.IO.Directory.GetFiles(filepath)){
+                    if (!System.IO.Path.GetFileName(file).EndsWith("inf") && !System.IO.Path.GetFileName(file).EndsWith("ini"))
+                    imageFiles.Add(System.IO.Path.GetFileName(file));
+                }
+            }
             public uint Def_OpenDirectory(string filename, IntPtr info)
             {
                 if (new VNode(filename).isValid)
@@ -140,42 +151,93 @@ namespace Discovery.ListAPIs
                 return 0;
             }
 
-            public uint Def_ReadFile(string filename, IntPtr buffer, uint bufferSize, ref uint readBytes, long offset, IntPtr info)
+            public uint Def_ReadFile(string filename, IntPtr buffer, uint BufferSize, ref uint NumberByteReadSuccess, long Offset, IntPtr info)
             {
                 StringBuilder data = new StringBuilder();
                 VNode Node = new VNode(filename);
                 string query="";
+                byte[] file=null;
                 
-                Console.WriteLine("reading {0} {1}",Node.isValid,Node.fileName);
-                if (Node.isValid && Node.param.TryGetValue("q",out query))
+                Console.WriteLine("reading {0} {1} {2}", Node.isValid, Node.fileName,Node.curDir);
+                    if (Node.isValid && Node.param.TryGetValue("q", out query))
+                    {
+                        #region This Is google Service
+                        if (filename.StartsWith("google", StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            Task<Google.Apis.Customsearch.v1.Data.Search> ret;
+                            if (Node.param.ContainsKey("n"))
+                            {
+                                int n = 1;
+                                string temp = "";
+                                Node.param.TryGetValue("n", out temp);
+                                int.TryParse(temp, out n);
+                                ret = ServiceProvider.SearchGoogle(query, n);
+                            }
+                            else
+                            {
+                                ret = ServiceProvider.SearchGoogle(query, 1);
+                            }
+                            ret.Wait();
+                            if (ret.Result.Items != null)
+                                foreach (Google.Apis.Customsearch.v1.Data.Result s in ret.Result.Items)
+                                {
+                                    data.AppendLine(s.Title);
+                                    data.AppendLine("----------------------------------------------------------------");
+                                    data.AppendLine(s.Snippet);
+                                    data.AppendLine(s.Link);
+                                    data.Append("\n");
+                                }
+                            Console.WriteLine(data.ToString());
+                            file = System.Text.Encoding.ASCII.GetBytes(data.ToString());
+
+
+                        }
+                        #endregion
+
+                    }
+                    else if (Node.isValid && Node.param.TryGetValue("op", out query))
+                    {
+                        #region ImagePass
+
+
+
+
+                        #endregion
+
+
+                    }
+                    else if (Node.curDir == "ImagePass")
+                    {
+                        if (imageFiles.Contains(Node.fileName + "." + Node.fileExtention))
+                        {
+                            Console.WriteLine("Direct Read");
+                            KalikoImage image = new KalikoImage(filepath + @"\" + Node.fileName + "." + Node.fileExtention);
+                            file = image.ByteArray;
+                        }
+                    }
+                
+
+                if (file != null && file.Length != 0 && Offset < file.Length)
                 {
-                    Task<Google.Apis.Customsearch.v1.Data.Search> ret;
-                   if(Node.param.ContainsKey("n")){
-                       int n=0;
-                       string temp="";
-                       Node.param.TryGetValue("n",out temp);
-                       int.TryParse(temp,out n);
-                        ret= ServiceProvider.SearchGoogle(query,n);
-                   }
-                   else{
-                       ret=ServiceProvider.SearchGoogle(query,0);
-                   }
-                     ret.Wait();
-                     foreach (Google.Apis.Customsearch.v1.Data.Result s in ret.Result.Items)
-                     {
-                         data.AppendLine(s.Title);
-                         data.AppendLine("----------------------------------------------------------------");
-                         data.AppendLine(s.Snippet);
-                         data.AppendLine(s.Link);
-                     }
-                     Console.WriteLine(data.ToString());
+                    if (BufferSize > file.Length - Offset)
+                    {
+                        NumberByteReadSuccess = (uint)(file.Length - Offset);
+                        System.Runtime.InteropServices.Marshal.Copy(file, (int)Offset, buffer, (int)NumberByteReadSuccess);
+                    }
+                    else
+                    {
+                        NumberByteReadSuccess = BufferSize;
+                        System.Runtime.InteropServices.Marshal.Copy(file, (int)Offset, buffer, (int)BufferSize);
+                    }
+                    return 0;
                 }
                 else
                 {
-                    Console.WriteLine("Error param {0}",Node.fileName);
-                    return 0xC000000F; 
+                    Console.WriteLine("Error param {0}", Node.fileName);
+                    return 0xC000000F;
                 }
-                return 0;
+                
+                
             }
 
             public uint Def_WriteFile(string filename, byte[] buffer, ref uint writtenBytes, long offset, IntPtr info)

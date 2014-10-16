@@ -15,11 +15,13 @@ namespace NodeRsolver
         public bool hasPara;
         public bool isRemote;
         public bool isValid;
+        public string lastNode;
         public Dictionary<string, string> param = new Dictionary<string, string>();
 
         public bool extractFileParam(string[] nodeArray){
           
                 string rmNode = nodeArray[nodeArray.Length - 1];
+                lastNode = rmNode;
                 if (rmNode.Contains("!"))
                     fileName = rmNode.Remove(rmNode.IndexOf("!"));
                 else
