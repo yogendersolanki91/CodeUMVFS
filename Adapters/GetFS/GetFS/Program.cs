@@ -11,9 +11,11 @@ using DokanXNative;
 using Utility;
 using NodeRsolver;
 using System.Text;
+using System.Linq;
 using System.Collections.Generic;
 using Kaliko.ImageLibrary;
 using Kaliko.ImageLibrary.Filters;
+using Kaliko.ImageLibrary.Scaling;
 
 
 namespace Discovery.ListAPIs
@@ -208,11 +210,46 @@ namespace Discovery.ListAPIs
                     }
                     else if (Node.curDir == "ImagePass")
                     {
-                        if (imageFiles.Contains(Node.fileName + "." + Node.fileExtention))
+                        if (!Node.fileExtention.EndsWith("inf", StringComparison.CurrentCultureIgnoreCase) && !Node.fileExtention.EndsWith("ini", StringComparison.CurrentCultureIgnoreCase))
+                        
+                        if (imageFiles.Any(name =>name.StartsWith(Node.fileName)))
                         {
                             Console.WriteLine("Direct Read");
-                            KalikoImage image = new KalikoImage(filepath + @"\" + Node.fileName + "." + Node.fileExtention);
-                            file = image.ByteArray;
+                            KalikoImage image = new KalikoImage(filepath + @"\" + imageFiles.Where(d=>d.StartsWith(Node.fileName)).ToList()[0]);
+                            Console.WriteLine("HEHFKHLDSKHFLSDHLKFHKD *()&*&(&**&("+image.ByteArray.Length);
+                            string width, height;
+                            System.IO.MemoryStream ms = new System.IO.MemoryStream();
+                            if (Node.param.TryGetValue("w", out width) && Node.param.TryGetValue("h", out width))
+                            {
+                                int w = 0, h = 0;
+                                if (int.TryParse(width, out w) && int.TryParse(width, out h))
+                                    image.Scale(new FitScaling(w, h)).SavePng(ms);
+                            }
+                            string ext = Node.fileExtention.ToLowerInvariant();
+
+                            
+                            switch (ext)
+                            {
+                                case "png":
+                                    image.LoadImage(ms);
+                                    image.SavePng(ms);
+                                   
+                                    break;
+                                case "gif":
+                                    image.LoadImage(ms);
+                                    image.SaveGif(ms);
+                                    break;
+                                case "bmp":
+                                    image.LoadImage(ms);
+                                    image.SaveBmp(ms);
+                                    break;
+                                default:
+                                    image.LoadImage(ms);
+                                    image.SaveJpg(ms,100);
+                                    break;
+                            }
+                             file=ms.ToArray();
+                           
                         }
                     }
                 
