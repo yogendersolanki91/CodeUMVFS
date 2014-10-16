@@ -90,7 +90,7 @@ namespace NodeRsolver
             }
             else if (nodeArray.Length == 1)
             {
-                extractFileParam(nodeArray);
+               isValid=extractFileParam(nodeArray);
                 if (!isFile)
                     curDir = nodeArray[nodeArray.Length - 1];
             }
@@ -98,19 +98,19 @@ namespace NodeRsolver
             {
                 
                 rootDir = nodeArray[nodeArray.Length - 2];
-                extractFileParam(nodeArray);
+                isValid = extractFileParam(nodeArray);
                 if(!isFile)
                     curDir = nodeArray[nodeArray.Length - 1];
                 else
                     curDir = nodeArray[nodeArray.Length - 2];
-
+               
                 Console.WriteLine("Resolve {0} {1}",curDir,rootDir);
                 
             }
             else
             {
-                
-                extractFileParam(nodeArray);
+
+                isValid = extractFileParam(nodeArray);
                 rootDir = nodeArray[0];
                 if(isFile)
                 curDir = nodeArray[nodeArray.Length - 2];                

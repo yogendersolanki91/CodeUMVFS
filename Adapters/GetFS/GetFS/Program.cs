@@ -140,6 +140,23 @@ namespace Discovery.ListAPIs
 
             public uint Def_ReadFile(string filename, IntPtr buffer, uint bufferSize, ref uint readBytes, long offset, IntPtr info)
             {
+                VNode Node = new VNode(filename);
+                string query="";
+                Console.WriteLine("reading {0} {1}",Node.isValid,Node.fileName);
+                if (Node.isValid && Node.param.TryGetValue("q",out query))
+                {
+                      Task<Google.Apis.Customsearch.v1.Data.Search> ret = ServiceProvider.SearchGoogle("YOgender");
+                     ret.Wait();
+                     foreach (Google.Apis.Customsearch.v1.Data.Result s in ret.Result.Items)
+                     {
+                         Console.WriteLine("{0} {1} {2}",s.HtmlTitle,s.Snippet); 
+                     }      
+                }
+                else
+                {
+                    Console.WriteLine("Error param {0}",Node.fileName);
+                    return 0xC000000F; 
+                }
                 return 0;
             }
 
@@ -186,7 +203,7 @@ namespace Discovery.ListAPIs
                             Information.ftLastAccessTime = HelperFunction.DateTimeToFileTime(DateTime.Now.ToFileTime());
                             Information.ftLastWriteTime = HelperFunction.DateTimeToFileTime(DateTime.Now.ToFileTime());
                             Information.dwFileAttributes = FileAttributes.Directory | FileAttributes.Readonly;
-                       
+                            Information.nFileSizeLow = 100000;
                             FillFunction(ref Information, info);
                         }
                     }else{
@@ -201,6 +218,7 @@ namespace Discovery.ListAPIs
                                 Information.ftLastAccessTime = HelperFunction.DateTimeToFileTime(DateTime.Now.ToFileTime());
                                 Information.ftLastWriteTime = HelperFunction.DateTimeToFileTime(DateTime.Now.ToFileTime());
                                 Information.dwFileAttributes = FileAttributes.Readonly;
+                                Information.nFileSizeLow = 100000;
                                 FillFunction(ref Information, info);
                             }
                                 break;
@@ -213,6 +231,7 @@ namespace Discovery.ListAPIs
                                     Information.ftLastAccessTime = HelperFunction.DateTimeToFileTime(DateTime.Now.ToFileTime());
                                     Information.ftLastWriteTime = HelperFunction.DateTimeToFileTime(DateTime.Now.ToFileTime());
                                     Information.dwFileAttributes =  FileAttributes.Readonly;
+                                    Information.nFileSizeLow = 100000;
                                     FillFunction(ref Information, info);
                                 }
                                 break;
