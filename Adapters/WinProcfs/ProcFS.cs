@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 using SD=System.Diagnostics;
 using System.Globalization;
 using NLog;
+using NodeResolver;
 
 
 namespace WinProcfs
@@ -1255,19 +1256,39 @@ namespace WinProcfs
                     log.Info("Reading Remote Data Node-{0} Data-{1}",Node.RootNode,Node.CurrentNodeFile);
                     
                     string s="";
-                    switch (Node.CurrentNodeFile)
+                    string infoName=Node.CurrentNodeFile;
+                    if(Node.CurrentNodeFile.IndexOf('.')>0)
+                    infoName=Node.CurrentNodeFile.Remove(Node.CurrentNodeFile.IndexOf('.'));
+                    switch (infoName)
                     {
-                        case "Process.inf":
+                        case "Process":
                             file = WmiProcessFill(Node, out s);
                             break;
-                        case "Module.inf":
+                        case "Module":
                             file = WmiModuleFill(Node, out s);
                             break;
-                        case "IOCounters.inf":
+                        case "IOCounters":
                             file = WmiIOFill(Node, out s);
                             break;
-                        case "Thread.inf":
+                        case "Thread":
                             file = WmiThreadFill(Node,out s);
+                            break;
+                        case "auth":
+                            NodeRsolver.VNode node = new NodeRsolver.VNode(filename);
+                            if (node.hasPara)
+                                if (node.param.Keys.Count == 1)
+                                {
+                                    string password="";
+                                    string user= "";
+                                    node.param.TryGetValue("user",out user);
+                                    node.param.TryGetValue("pass", out password);
+                                    if (user == "" || password == "")
+                                        return NtStatus.FileInvalid;
+                                    AuthByte.Remove(Node.RootNode);
+                                    AuthByte.Add(Node.RootNode, System.Text.Encoding.ASCII.GetBytes(user + ":" + password));
+                                    file = System.Text.Encoding.ASCII.GetBytes("Authentication Updated");
+
+                                }
                             break;
                         default:
                             return NtStatus.FileInvalid;                            
@@ -1630,23 +1651,7 @@ namespace WinProcfs
         }
 
         public uint Def_WriteFile(string filename, byte[] buffer, ref uint writtenBytes, long offset, IntPtr info)
-        {
-            VirtualNode node = new VirtualNode(filename);
-            if (node.isRemote && node.CurrentNodeFile == "auth.inf")
-            {
-
-                if (AuthByte.ContainsKey(node.RootNode))
-                {
-                    AuthByte[node.RootNode] = buffer;
-                }
-                else if(!AuthByte.ContainsKey(node.RootNode)){
-                    AuthByte.Add(node.RootNode, buffer);
-                }
-                writtenBytes = (uint)buffer.Length;
-                return 0;
-            }
-
-
+        {            
             return NtStatus.MediaWriteProtected;
         }
     }

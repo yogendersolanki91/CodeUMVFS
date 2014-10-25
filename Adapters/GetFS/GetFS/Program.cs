@@ -164,7 +164,7 @@ namespace Discovery.ListAPIs
                     if (Node.isValid && Node.param.TryGetValue("q", out query))
                     {
                         #region This Is google Service
-                        if (filename.StartsWith("google", StringComparison.CurrentCultureIgnoreCase))
+                        if (Node.fileName.StartsWith("google", StringComparison.CurrentCultureIgnoreCase))
                         {
                             Task<Google.Apis.Customsearch.v1.Data.Search> ret;
                             if (Node.param.ContainsKey("n"))
@@ -197,17 +197,6 @@ namespace Discovery.ListAPIs
                         #endregion
 
                     }
-                    else if (Node.isValid && Node.param.TryGetValue("op", out query))
-                    {
-                        #region ImagePass
-
-
-
-
-                        #endregion
-
-
-                    }
                     else if (Node.curDir == "ImagePass")
                     {
                         if (!Node.fileExtention.EndsWith("inf", StringComparison.CurrentCultureIgnoreCase) && !Node.fileExtention.EndsWith("ini", StringComparison.CurrentCultureIgnoreCase))
@@ -217,14 +206,25 @@ namespace Discovery.ListAPIs
                             Console.WriteLine("Direct Read");
                             KalikoImage image = new KalikoImage(filepath + @"\" + imageFiles.Where(d=>d.StartsWith(Node.fileName)).ToList()[0]);
                             Console.WriteLine("HEHFKHLDSKHFLSDHLKFHKD *()&*&(&**&("+image.ByteArray.Length);
-                            string width, height;
+                            string width="", height="",OP="",x="",y="";
                             System.IO.MemoryStream ms = new System.IO.MemoryStream();
-                            if (Node.param.TryGetValue("w", out width) && Node.param.TryGetValue("h", out width))
+                            
+                            Node.param.TryGetValue("op",out OP);
+                            if (OP=="s" && Node.param.TryGetValue("w", out width) && Node.param.TryGetValue("h", out width))
                             {
                                 int w = 0, h = 0;
                                 if (int.TryParse(width, out w) && int.TryParse(width, out h))
                                     image.Scale(new FitScaling(w, h)).SavePng(ms);
                             }
+                            if (OP=="c" && Node.param.TryGetValue("w", out width) && Node.param.TryGetValue("h", out width) && Node.param.TryGetValue("x", out x) && Node.param.TryGetValue("y", out y))
+                            {
+                                int w = 0, h = 0,X,Y;
+
+                                if (int.TryParse(width, out w) && int.TryParse(width, out h) && int.TryParse(x, out X) && int.TryParse(y, out Y))
+                                    image.Crop(X, Y, w, h);
+                                image.SavePng(ms);
+                            }
+
                             string ext = Node.fileExtention.ToLowerInvariant();
 
                             

@@ -85,6 +85,10 @@
       <Project>{bdb3e942-7d56-4c4c-8302-cd25e3234c39}</Project>
       <Name>DokanXNative</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\NodeRsolver\NodeResolver.csproj">
+      <Project>{d5dc0526-44fb-4645-95cd-f1c3ca94dfea}</Project>
+      <Name>NodeResolver</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Utilitie\Utility.csproj">
       <Project>{e6fc0b09-ede2-4ced-90a7-a54a3fa56147}</Project>
       <Name>Utility</Name>
