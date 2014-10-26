@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace NodeRsolver
 {
@@ -68,6 +69,7 @@ namespace NodeRsolver
                     isValid = true;
                     isRemote = false;
                 }
+                
                 return true;
             
           
@@ -81,7 +83,8 @@ namespace NodeRsolver
             curDir="\\";
             rootDir="\\";
             fileName="";
-            fileExtention="";            
+            fileExtention="";
+            Regex ip = new Regex(@"^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$");
             if (nodeArray==null || nodeArray.Length == 0)
             {
                 isFile = false;
@@ -93,6 +96,7 @@ namespace NodeRsolver
             else if (nodeArray.Length == 1)
             {
                isValid=extractFileParam(nodeArray);
+               isRemote = ip.IsMatch(nodeArray[0]);
                 if (!isFile)
                     curDir = nodeArray[nodeArray.Length - 1];
             }
@@ -101,6 +105,7 @@ namespace NodeRsolver
                 
                 rootDir = nodeArray[nodeArray.Length - 2];
                 isValid = extractFileParam(nodeArray);
+                isRemote = ip.IsMatch(nodeArray[0]);
                 if(!isFile)
                     curDir = nodeArray[nodeArray.Length - 1];
                 else
@@ -114,6 +119,7 @@ namespace NodeRsolver
 
                 isValid = extractFileParam(nodeArray);
                 rootDir = nodeArray[0];
+                isRemote = ip.IsMatch(nodeArray[0]);
                 if(isFile)
                 curDir = nodeArray[nodeArray.Length - 2];                
                 else

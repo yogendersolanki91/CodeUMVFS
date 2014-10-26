@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;
 using SD=System.Diagnostics;
 using System.Globalization;
 using NLog;
-using NodeResolver;
+using NodeRsolver;
 
 
 namespace WinProcfs
@@ -862,13 +862,13 @@ namespace WinProcfs
        #endregion
 
       #region All Remote WMI
-      public List<string> WmiProcessCollection(VirtualNode node ,out string s) {
+      public List<string> WmiProcessCollection(VNode node ,out string s) {
           List<string> strList = new List<string>();
           Dictionary<String, processInfos> details = new Dictionary<string, processInfos>();
           ConnectionOptions con = new ConnectionOptions();
           byte[] authentication=new byte[12];
            string[] str;
-          if( AuthByte.TryGetValue(node.RootNode,out authentication)){
+          if( AuthByte.TryGetValue(node.rootDir,out authentication)){
               if (System.Diagnostics.Debugger.IsAttached)
               log.Info("Authentication -"+System.Text.Encoding.ASCII.GetString(authentication));
               str=System.Text.Encoding.ASCII.GetString(authentication).Split(':');
@@ -882,11 +882,11 @@ namespace WinProcfs
               s = "Access Denied";
               return strList;
           }
-          con.Username =node.RootNode+@"\"+str[0];
+          con.Username =node.rootDir+@"\"+str[0];
           con.Password = str[1];
           con.Authentication = AuthenticationLevel.Packet;
           con.Impersonation = ImpersonationLevel.Impersonate;
-          ManagementScope scope = new ManagementScope("\\\\"+node.RootNode+"\\root\\cimv2", con);
+          ManagementScope scope = new ManagementScope("\\\\"+node.rootDir+"\\root\\cimv2", con);
           ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_Process");
           s = "";
           Wmi.Objects.Process.EnumerateProcesses(new ManagementObjectSearcher(scope, query), ref details, ref s);
@@ -902,7 +902,7 @@ namespace WinProcfs
           
       
       }
-      public byte[] WmiProcessFill(VirtualNode node ,out string s){
+      public byte[] WmiProcessFill(VNode node ,out string s){
              StringBuilder builder=new StringBuilder();
             s="";           
          try
@@ -911,7 +911,7 @@ namespace WinProcfs
           ConnectionOptions con = new ConnectionOptions();
           byte[] authentication=new byte[12];
           string[] str={"",""};
-          if( AuthByte.TryGetValue(node.RootNode,out authentication)){
+          if( AuthByte.TryGetValue(node.rootDir,out authentication)){
               if (System.Diagnostics.Debugger.IsAttached)
               log.Info("Authentication -"+System.Text.Encoding.ASCII.GetString(authentication));
               str=System.Text.Encoding.ASCII.GetString(authentication).Split(':');
@@ -925,17 +925,17 @@ namespace WinProcfs
               s = "Access Denied";
               
           }
-          con.Username =node.RootNode+@"\"+str[0];
+          con.Username =node.rootDir+@"\"+str[0];
           con.Password = str[1];
           con.Authentication = AuthenticationLevel.Packet;
           con.Impersonation = ImpersonationLevel.Impersonate;
-          ManagementScope scope = new ManagementScope("\\\\"+node.RootNode+"\\root\\cimv2", con);
+          ManagementScope scope = new ManagementScope("\\\\"+node.rootDir+"\\root\\cimv2", con);
           ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_Process");
           s = "";
           Wmi.Objects.Process.EnumerateProcesses(new ManagementObjectSearcher(scope, query), ref details, ref s);
        
           processInfos pfs=new processInfos();
-          if(details.TryGetValue(node.CurrentNodeDir,out pfs)){              
+          if(details.TryGetValue(node.curDir,out pfs)){              
                   builder.AppendLine("[Process Property]");
                   builder.AppendLine("AffinityMask:" + NullHandler(pfs.AffinityMask));
                   builder.AppendLine("Name:" + NullHandler(pfs.Name));
@@ -984,7 +984,7 @@ namespace WinProcfs
            return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
       }
 
-      public byte[] WmiModuleFill(VirtualNode node, out string s)
+      public byte[] WmiModuleFill(VNode node, out string s)
       {
           StringBuilder builder = new StringBuilder();
           s = "";
@@ -994,7 +994,7 @@ namespace WinProcfs
               ConnectionOptions con = new ConnectionOptions();
               byte[] authentication = new byte[12];
               string[] str = { };
-              if (AuthByte.TryGetValue(node.RootNode, out authentication))
+              if (AuthByte.TryGetValue(node.rootDir, out authentication))
               {
                   if (System.Diagnostics.Debugger.IsAttached)
                       log.Info("Authentication -" + System.Text.Encoding.ASCII.GetString(authentication));
@@ -1012,14 +1012,14 @@ namespace WinProcfs
                   s = "Access Denied";
 
               }
-              con.Username = node.RootNode + @"\" + str[0];
+              con.Username = node.rootDir + @"\" + str[0];
               con.Password = str[1];
               con.Authentication = AuthenticationLevel.Packet;
               con.Impersonation = ImpersonationLevel.Impersonate;
-              ManagementScope scope = new ManagementScope("\\\\" + node.RootNode + "\\root\\cimv2", con);
+              ManagementScope scope = new ManagementScope("\\\\" + node.rootDir + "\\root\\cimv2", con);
               ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_Process");
               s = "";
-              Wmi.Objects.Module.EnumerateModuleById(int.Parse(node.CurrentNodeDir),new ManagementObjectSearcher(scope, query), ref details, ref s);
+              Wmi.Objects.Module.EnumerateModuleById(int.Parse(node.curDir),new ManagementObjectSearcher(scope, query), ref details, ref s);
               
               processInfos pfs = new processInfos();
               if (details.Values.Count>0)
@@ -1057,7 +1057,7 @@ namespace WinProcfs
           return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
       }
 
-      public byte[] WmiThreadFill(VirtualNode node, out string s)
+      public byte[] WmiThreadFill(VNode node, out string s)
       {
           StringBuilder builder = new StringBuilder();
           s = "";
@@ -1067,7 +1067,7 @@ namespace WinProcfs
               ConnectionOptions con = new ConnectionOptions();
               byte[] authentication = new byte[12];
               string[] str = { };
-              if (AuthByte.TryGetValue(node.RootNode, out authentication))
+              if (AuthByte.TryGetValue(node.rootDir, out authentication))
               {
                   if (System.Diagnostics.Debugger.IsAttached)
                       log.Info("Authentication -" + System.Text.Encoding.ASCII.GetString(authentication));
@@ -1085,14 +1085,14 @@ namespace WinProcfs
                   s = "Access Denied";
 
               }
-              con.Username = node.RootNode + @"\" + str[0];
+              con.Username = node.rootDir + @"\" + str[0];
               con.Password = str[1];
               con.Authentication = AuthenticationLevel.Packet;
               con.Impersonation = ImpersonationLevel.Impersonate;
-              ManagementScope scope = new ManagementScope("\\\\" + node.RootNode + "\\root\\cimv2", con);
+              ManagementScope scope = new ManagementScope("\\\\" + node.rootDir + "\\root\\cimv2", con);
               ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_Thread");
               s = "";
-              Wmi.Objects.Thread.EnumerateThreadByIds(int.Parse(node.CurrentNodeDir), new ManagementObjectSearcher(scope, query), ref details, ref s);
+              Wmi.Objects.Thread.EnumerateThreadByIds(int.Parse(node.curDir), new ManagementObjectSearcher(scope, query), ref details, ref s);
 
               processInfos pfs = new processInfos();
               if (details.Values.Count > 0)
@@ -1131,7 +1131,7 @@ namespace WinProcfs
           return System.Text.Encoding.UTF8.GetBytes(builder.ToString());
       }
 
-      public byte[] WmiIOFill(VirtualNode node, out string s)
+      public byte[] WmiIOFill(VNode node, out string s)
       {
           StringBuilder builder = new StringBuilder();
           s = "";
@@ -1141,7 +1141,7 @@ namespace WinProcfs
               ConnectionOptions con = new ConnectionOptions();
               byte[] authentication = new byte[12];
               string[] str = { };
-              if (AuthByte.TryGetValue(node.RootNode, out authentication))
+              if (AuthByte.TryGetValue(node.rootDir, out authentication))
               {
                   if (System.Diagnostics.Debugger.IsAttached)
                       log.Info("Authentication -" + System.Text.Encoding.ASCII.GetString(authentication));
@@ -1159,17 +1159,17 @@ namespace WinProcfs
                   s = "Access Denied";
 
               }
-              con.Username = node.RootNode + @"\" + str[0];
+              con.Username = node.rootDir + @"\" + str[0];
               con.Password = str[1];
               con.Authentication = AuthenticationLevel.Packet;
               con.Impersonation = ImpersonationLevel.Impersonate;
-              ManagementScope scope = new ManagementScope("\\\\" + node.RootNode + "\\root\\cimv2", con);
+              ManagementScope scope = new ManagementScope("\\\\" + node.rootDir + "\\root\\cimv2", con);
               ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_Process");
               s = "";
               Wmi.Objects.Process.EnumerateProcesses(new ManagementObjectSearcher(scope, query), ref details, ref s);
 
               processInfos pfs = new processInfos();
-              if (details.TryGetValue(node.CurrentNodeDir,out pfs))
+              if (details.TryGetValue(node.curDir,out pfs))
               {
                   builder.AppendLine("[IOCounter]");
                   builder.AppendLine("WriteOperationCount:" + NullHandler(pfs.IOValues.WriteOperationCount));
@@ -1249,17 +1249,19 @@ namespace WinProcfs
             try
             {
                 byte[] file=null;
-                VirtualNode Node = new VirtualNode(filename);
-
+               // VirtualNode Node = new VirtualNode(filename);
+                NodeRsolver.VNode Node = new NodeRsolver.VNode(filename);
+                
+                
                 if (Node.isFile && Node.isRemote) {
                     if (System.Diagnostics.Debugger.IsAttached)
-                    log.Info("Reading Remote Data Node-{0} Data-{1}",Node.RootNode,Node.CurrentNodeFile);
+                    log.Info("Reading Remote Data Node-{0} Data-{1}",Node.rootDir,Node.curDir);
                     
                     string s="";
-                    string infoName=Node.CurrentNodeFile;
-                    if(Node.CurrentNodeFile.IndexOf('.')>0)
-                    infoName=Node.CurrentNodeFile.Remove(Node.CurrentNodeFile.IndexOf('.'));
-                    switch (infoName)
+               
+                    
+                   
+                    switch (Node.fileName)
                     {
                         case "Process":
                             file = WmiProcessFill(Node, out s);
@@ -1274,18 +1276,18 @@ namespace WinProcfs
                             file = WmiThreadFill(Node,out s);
                             break;
                         case "auth":
-                            NodeRsolver.VNode node = new NodeRsolver.VNode(filename);
-                            if (node.hasPara)
-                                if (node.param.Keys.Count == 1)
+                            
+                            if (Node.hasPara)
+                                if (Node.param.Keys.Count == 2)
                                 {
                                     string password="";
                                     string user= "";
-                                    node.param.TryGetValue("user",out user);
-                                    node.param.TryGetValue("pass", out password);
+                                    Node.param.TryGetValue("user",out user);
+                                    Node.param.TryGetValue("pass", out password);
                                     if (user == "" || password == "")
                                         return NtStatus.FileInvalid;
-                                    AuthByte.Remove(Node.RootNode);
-                                    AuthByte.Add(Node.RootNode, System.Text.Encoding.ASCII.GetBytes(user + ":" + password));
+                                    AuthByte.Remove(Node.rootDir);
+                                    AuthByte.Add(Node.rootDir.ToString(), System.Text.Encoding.ASCII.GetBytes(user + ":" + password));
                                     file = System.Text.Encoding.ASCII.GetBytes("Authentication Updated");
 
                                 }
@@ -1299,42 +1301,42 @@ namespace WinProcfs
                 else if (Node.isFile)
                 {
                     if (System.Diagnostics.Debugger.IsAttached)
-                    log.Info("Reading Local Data Node-{0} Data-{1}", Node.RootNode, Node.CurrentNodeFile);
-                    if (Node.CurrentNodeFile.EndsWith(".inf"))
+                    log.Info("Reading Local Data Node-{0} Data-{1}", Node.rootDir, Node.curDir);
+                    if (Node.fileExtention=="inf")
                     {
                        
                         int pid;
                         
-                        if (int.TryParse(Node.CurrentNodeDir, out pid))
+                        if (int.TryParse(Node.curDir, out pid))
                         {
 
                            
-                            switch (Node.CurrentNodeFile) { 
-                                case "Process.inf":
+                            switch (Node.fileName) { 
+                                case "Process":
                                 file = FillProcessDetail(pid);
                                     break;
-                                case "Memory.inf":
+                                case "Memory":
                                     file = FillMemoryDetail(pid);
                                     break;
-                                case "Network.inf":
+                                case "Network":
                                     file = FillNetworkkDetail(pid);
                                     break;
-                                case "Module.inf":
+                                case "Module":
                                     file = FillModuleDetail(pid);
                                     break;
-                                case "Thread.inf":
+                                case "Thread":
                                     file = FillThreadDetail(pid);
                                     break;
-                                case "Token.inf":
+                                case "Token":
                                     file = FillTokenDetail(pid);
                                     break;
-                                case "Handle.inf":
+                                case "Handle":
                                     file = FillHandleDetail(pid);
                                     break;
-                                case "Window.inf":
+                                case "Window":
                                     file = FillWindowDetail(pid);
                                     break;
-                                case "MemRegion.inf":
+                                case "MemRegion":
                                     file = FillMemRegionDetail(pid);
                                     break;
                                 case "IOCounters.inf":
@@ -1351,19 +1353,19 @@ namespace WinProcfs
                         else
                         {
                           
-                            if(Node.CurrentNodeDir=="\\" || Node.CurrentNodeDir==""){                           
-                           switch (Node.CurrentNodeFile) 
+                            if(Node.rootDir=="\\" || Node.curDir==""){                           
+                           switch (Node.fileName) 
                             {
-                                case "NetStat.inf":
+                                case "NetStat":
                                 file = FillNetworkStatDetail();
                                 break;
-                                case "SystemInfo.inf":
+                                case "SystemInfo":
                                 file = FillSysDetail();
                                 break;
-                                case "Jobs.inf":
+                                case "Jobs":
                                 file = FillJobDetail();
                                 break;
-                               case "Services.inf":
+                               case "Services":
                                 lock (criticalS)
                                 {
                                     file = new byte[serviceCatch.Length];
@@ -1462,16 +1464,16 @@ namespace WinProcfs
         {
             try
             {
-                VirtualNode Node = new VirtualNode(filename);
+                VNode Node = new VNode(filename);
                 if (Node.isRemote)
                 {
                     string s="";
                     if (System.Diagnostics.Debugger.IsAttached)
-                    log.Info("Remote Node Accessed {0}",Node.RootNode);
+                    log.Info("Remote Node Accessed {0}",Node.rootDir);
                     if (s.Contains("Access"))
                         return NtStatus.AccessDenied;
                     int i = 0;
-                    if (!int.TryParse(Node.CurrentNodeDir, out i))
+                    if (!int.TryParse(Node.curDir, out i))
                     foreach (string prcs in WmiProcessCollection(Node,out s))
                     {
                         WIN32_FIND_DATA Information = new WIN32_FIND_DATA();
@@ -1482,8 +1484,8 @@ namespace WinProcfs
                         Information.dwFileAttributes = FileAttributes.Directory | FileAttributes.Readonly;
                         FillFunction(ref Information, info);
                     }
-                  
-                    if (int.TryParse(Node.CurrentNodeDir, out i))
+
+                    if (int.TryParse(Node.curDir, out i))
                     {
                         foreach (string file in remoteBase) {
                             WIN32_FIND_DATA Information = new WIN32_FIND_DATA();
@@ -1496,7 +1498,7 @@ namespace WinProcfs
                             FillFunction(ref Information, info);
                         }
                     }
-                    else
+                    else if(AuthByte.ContainsKey(Node.curDir))
                     {
                         foreach (string file in remoteCommon)
                         {
@@ -1514,10 +1516,10 @@ namespace WinProcfs
 
                 }
                 
-                else if ((Node.RootNode == "\\" || Node.RootNode == "") && !Node.isFile && Node.CurrentNodeDir=="")
+                else if (!Node.isFile && Node.curDir=="\\")
                 {
                     if (System.Diagnostics.Debugger.IsAttached)
-                        log.Info("Local Node Accessed {0}", Node.RootNode);
+                        log.Info("Local Node Accessed {0}", Node.rootDir);
                     lock (critical)
                     {
                         foreach (string prcs in database.Keys)
@@ -1555,10 +1557,10 @@ namespace WinProcfs
                     }
 
                 }
-                else if (!Node.isFile && Node.CurrentNodeDir != "" && Node.RootNode!="")
+                else if (!Node.isFile && Node.curDir != "" && Node.rootDir!="")
                 {
                     int id;
-                    if (Node.CurrentNodeDir != "" && int.TryParse(Node.CurrentNodeDir, out id))
+                    if (Node.curDir != "" && int.TryParse(Node.curDir, out id))
                     {
                         List<int> childProcess = Process.EnumerateChildProcessesById(id);
                         foreach (int prcs in childProcess)
